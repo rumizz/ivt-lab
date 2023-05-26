@@ -115,4 +115,82 @@ public class GT4500Test {
     });
   }
 
+  @Test void fireTorpedo_All_success_if_one_succeeds() {
+    // Arrange
+    when(primaryTorpedoStore.isEmpty()).thenReturn(false);
+    when(secondaryTorpedoStore.isEmpty()).thenReturn(false);
+      
+    when(primaryTorpedoStore.fire(1)).thenReturn(true);
+    when(secondaryTorpedoStore.fire(1)).thenReturn(false);
+
+    // Act
+    boolean result = ship.fireTorpedo(FiringMode.ALL);
+    // Assert
+    assertEquals(true, result);
+
+    //
+    when(primaryTorpedoStore.fire(1)).thenReturn(false);
+    when(secondaryTorpedoStore.fire(1)).thenReturn(true);
+
+    // Act
+    result = ship.fireTorpedo(FiringMode.ALL);
+    // Assert
+    assertEquals(true, result);
+
+    //
+    when(primaryTorpedoStore.fire(1)).thenReturn(false);
+    when(secondaryTorpedoStore.fire(1)).thenReturn(false);
+
+    // Act
+    result = ship.fireTorpedo(FiringMode.ALL);
+    // Assert
+    assertEquals(false, result);
+  }
+
+  @Test
+  void fireTorpedo_Single_wasPrimaryFiredLast() {
+    
+    // Setup
+    when(primaryTorpedoStore.isEmpty()).thenReturn(false);
+    when(secondaryTorpedoStore.isEmpty()).thenReturn(true);
+      
+    when(primaryTorpedoStore.fire(1)).thenReturn(true);
+    when(secondaryTorpedoStore.fire(1)).thenReturn(true);
+
+    // Set wasPrimaryFiredLast to true
+    ship.fireTorpedo(FiringMode.ALL);
+
+    // second not empty, primary should not be called
+    when(primaryTorpedoStore.fire(1)).thenThrow(new RuntimeException("Should not be called"));
+    when(secondaryTorpedoStore.fire(1)).thenReturn(false);
+
+    assertDoesNotThrow(() -> {
+      boolean result = ship.fireTorpedo(FiringMode.ALL);
+      // Assert
+      assertEquals(true, result);
+    });
+
+    // second is empty, primary should be called
+    when(primaryTorpedoStore.isEmpty()).thenReturn(false);
+    when(secondaryTorpedoStore.isEmpty()).thenReturn(true);
+    when(primaryTorpedoStore.fire(1)).thenReturn(false);
+    when(secondaryTorpedoStore.fire(1)).thenThrow(new RuntimeException("Should not be called"));
+
+    assertDoesNotThrow(() -> {
+      boolean result = ship.fireTorpedo(FiringMode.ALL);
+      // Assert
+      assertEquals(true, result);
+    });
+
+    // both are empty, none should be called
+    when(primaryTorpedoStore.fire(1)).thenThrow(new RuntimeException("Should not be called"));
+    when(secondaryTorpedoStore.fire(1)).thenThrow(new RuntimeException("Should not be called"));
+
+    assertDoesNotThrow(() -> {
+      boolean result = ship.fireTorpedo(FiringMode.ALL);
+      // Assert
+      assertEquals(false, result);
+    });
+  }
+
 }
